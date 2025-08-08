@@ -171,10 +171,10 @@ const Search = () => {
 
               <div>
                 <Label>Updated within</Label>
-                <Select value={String(filters.updated_within_days||"")} onValueChange={(v) => setFilters((f) => ({ ...f, updated_within_days: v ? Number(v) : undefined }))}>
+                <Select value={filters.updated_within_days !== undefined ? String(filters.updated_within_days) : "any"} onValueChange={(v) => setFilters((f) => ({ ...f, updated_within_days: v === "any" ? undefined : Number(v) }))}>
                   <SelectTrigger className="mt-2"><SelectValue placeholder="Any" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
+                    <SelectItem value="any">Any</SelectItem>
                     <SelectItem value="30">Last 30 days</SelectItem>
                     <SelectItem value="90">Last 90 days</SelectItem>
                   </SelectContent>
