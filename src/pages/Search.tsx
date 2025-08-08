@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { demoProfiles, skillsCatalog } from "@/components/skills/sample-data";
 import { computeMatchScore, Filters, RequestedSkill } from "@/components/skills/MatchUtils";
 import { Button } from "@/components/ui/button";
@@ -32,8 +32,25 @@ const Search = () => {
   const [filters, setFilters] = useState<Filters>({ skills: [], sort_by: "match" });
   const [skillQuery, setSkillQuery] = useState("");
   const [minLevel, setMinLevel] = useState(3);
+  const [skillsOpen, setSkillsOpen] = useState(false);
+  const skillsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (skillsRef.current && !skillsRef.current.contains(e.target as Node)) setSkillsOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
 
-  const skills = useMemo(() => skillsCatalog.filter((s) => s.is_active), []);
+  const skills = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("admin_skills");
+      const list = raw ? JSON.parse(raw) : skillsCatalog;
+      return (list as any[]).filter((s: any) => s.is_active);
+    } catch {
+      return skillsCatalog.filter((s) => s.is_active);
+    }
+  }, []);
   const filteredSkills = useMemo(
     () => skills.filter((s) => s.name.toLowerCase().includes((skillQuery||"").toLowerCase())),
     [skills, skillQuery]
@@ -94,25 +111,38 @@ const Search = () => {
               <CardTitle>Filters</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
+              <div ref={skillsRef} className="relative">
                 <Label>Skills</Label>
                 <Input
                   placeholder="Search skills…"
                   value={skillQuery}
-                  onChange={(e) => setSkillQuery(e.target.value)}
+                  onFocus={() => setSkillsOpen(true)}
+                  onChange={(e) => {
+                    setSkillQuery(e.target.value);
+                    setSkillsOpen(true);
+                  }}
                   className="mt-2"
                 />
-                <div className="mt-2 max-h-40 overflow-y-auto rounded-md border">
-                  {filteredSkills.slice(0, 20).map((s) => (
-                    <button
-                      key={s.id}
-                      className="w-full text-left px-3 py-2 hover:bg-accent transition-colors"
-                      onClick={() => addSkill(s.id)}
-                    >
-                      {s.name}
-                    </button>
-                  ))}
-                </div>
+                {skillsOpen && skillQuery && (
+                  <div className="absolute mt-2 z-50 max-h-60 w-full overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow">
+                    {filteredSkills.slice(0, 20).map((s) => (
+                      <button
+                        key={s.id}
+                        className="w-full text-left px-3 py-2 hover:bg-accent transition-colors"
+                        onClick={() => {
+                          addSkill(s.id);
+                          setSkillsOpen(false);
+                          setSkillQuery("");
+                        }}
+                      >
+                        {s.name}
+                      </button>
+                    ))}
+                    {filteredSkills.length === 0 && (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">No results</div>
+                    )}
+                  </div>
+                )}
                 <div className="mt-3">
                   <Label>Min Level: {minLevel}</Label>
                   <Slider value={[minLevel]} min={1} max={5} step={1} onValueChange={(v) => setMinLevel(v[0])} />
