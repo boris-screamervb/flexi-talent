@@ -134,9 +134,10 @@ const Search = () => {
 
               <div>
                 <Label>Category</Label>
-                <Select value={filters.category} onValueChange={(v) => setFilters((f) => ({ ...f, category: v }))}>
+                <Select value={filters.category ?? "any"} onValueChange={(v) => setFilters((f) => ({ ...f, category: v === "any" ? undefined : v }))}>
                   <SelectTrigger className="mt-2"><SelectValue placeholder="Any" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
                     <SelectItem value="Data/AI">Data/AI</SelectItem>
                     <SelectItem value="Cyber">Cyber</SelectItem>
                     <SelectItem value="Cloud/Infra">Cloud/Infra</SelectItem>
