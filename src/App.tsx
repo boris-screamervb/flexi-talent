@@ -11,6 +11,7 @@ import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import { AuthProvider } from "@/auth/AuthProvider";
 import { ProtectedRoute, PublicRoute } from "@/auth/Routes";
+import ProtectedLayout from "@/components/layout/ProtectedLayout";
 
 const queryClient = new QueryClient();
 
@@ -26,11 +27,13 @@ const App = () => (
           <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
           <Route path="/login" element={<PublicRoute><Auth /></PublicRoute>} />
 
-          {/* Protected routes */}
-          <Route path="/" element={<ProtectedRoute><Search /></ProtectedRoute>} />
-          <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+          {/* Protected layout */}
+          <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
+            <Route index element={<Search />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/admin" element={<Admin />} />
+          </Route>
 
           {/* Catch-all */}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

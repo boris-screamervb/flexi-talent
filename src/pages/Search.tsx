@@ -1,5 +1,4 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { demoProfiles, skillsCatalog } from "@/components/skills/sample-data";
 import { computeMatchScore, Filters, RequestedSkill } from "@/components/skills/MatchUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 function exportCsv(rows: any[], filename: string) {
   const replacer = (key: string, value: any) => (value === null ? "" : value);
@@ -42,26 +42,40 @@ const Search = () => {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const skills = useMemo(() => {
-    try {
-      const raw = localStorage.getItem("admin_skills");
-      const list = raw ? JSON.parse(raw) : skillsCatalog;
-      return (list as any[]).filter((s: any) => s.is_active);
-    } catch {
-      return skillsCatalog.filter((s) => s.is_active);
-    }
+  const [skills, setSkills] = useState<{ id: string; name: string }[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data: skillsData } = await supabase.from("skills").select("id,name").eq("is_active", true).order("name");
+      setSkills(skillsData || []);
+      const { data: profs } = await supabase.from("profiles").select("id,full_name,job_title,business_unit,city,country,availability_pct,earliest_start,open_to_mission,updated_at,profile_skills(skill_id,proficiency)");
+      const mapped = (profs || []).map((p: any) => ({
+        id: p.id,
+        full_name: p.full_name,
+        job_title: p.job_title,
+        business_unit: p.business_unit,
+        location_city: p.city,
+        location_country: p.country,
+        availability_percent: p.availability_pct,
+        availability_earliest_start: p.earliest_start,
+        open_to_mission: p.open_to_mission,
+        last_updated: p.updated_at,
+        skills: (p.profile_skills || []).map((s: any) => ({ skill_id: s.skill_id, proficiency_level: s.proficiency, years_experience: 0 })),
+      }));
+      setProfiles(mapped);
+    };
+    load();
   }, []);
+
   const filteredSkills = useMemo(
     () => skills.filter((s) => s.name.toLowerCase().includes((skillQuery||"").toLowerCase())),
     [skills, skillQuery]
   );
 
   const results = useMemo(() => {
-    const rows = demoProfiles
-      .map((p) => ({
-        profile: p,
-        match: computeMatchScore(p, filters),
-      }))
+    const rows = profiles
+      .map((p) => ({ profile: p, match: computeMatchScore(p as any, filters) }))
       .filter((r) => r.match.qualifies)
       .sort((a, b) => {
         switch (filters.sort_by) {
@@ -74,7 +88,7 @@ const Search = () => {
         }
       });
     return rows;
-  }, [filters]);
+  }, [filters, profiles]);
 
   const addSkill = (skill_id: string) => {
     const exists = filters.skills.some((s) => s.skill_id === skill_id);
@@ -252,7 +266,7 @@ const Search = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge>{profile.availability_percent ?? 0}% available</Badge>
-                    <Badge variant="secondary">Updated {new Date(profile.last_updated || 0).toLocaleDateString()}</Badge>
+                    <Badge variant="secondary">Updated {profile.last_updated ? new Date(profile.last_updated).toLocaleDateString() : "—"}</Badge>
                     <Badge>Score {match.score}</Badge>
                   </div>
                 </CardHeader>

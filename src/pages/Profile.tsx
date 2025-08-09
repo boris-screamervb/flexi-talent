@@ -6,22 +6,56 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { useMemo, useState } from "react";
-import { skillsCatalog, ProfileSkill } from "@/components/skills/sample-data";
+import { useEffect, useMemo, useState } from "react";
+import { ProfileSkill } from "@/components/skills/sample-data";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/auth/AuthProvider";
 
 const Profile = () => {
+  const { user } = useAuth();
   const [skillQuery, setSkillQuery] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<ProfileSkill[]>([]);
-  const skills = useMemo(() => {
-    try {
-      const raw = localStorage.getItem("admin_skills");
-      const list = raw ? JSON.parse(raw) : skillsCatalog;
-      return (list as any[]).filter((s: any) => s.is_active);
-    } catch {
-      return skillsCatalog.filter((s) => s.is_active);
-    }
-  }, []);
+  const [skills, setSkills] = useState<{ id: string; name: string }[]>([]);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [businessUnit, setBusinessUnit] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
+  const [languages, setLanguages] = useState("");
+  const [availability, setAvailability] = useState(50);
+  const [earliestStart, setEarliestStart] = useState<string>("");
+  const [openToMission, setOpenToMission] = useState(false);
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      const { data: skillsData } = await supabase.from("skills").select("id,name").eq("is_active", true).order("name");
+      setSkills(skillsData || []);
+      if (!user) return;
+      const { data: p } = await supabase.from("profiles").select("id,full_name,email,job_title,business_unit,city,country,languages,availability_pct,earliest_start,open_to_mission,notes").eq("user_id", user.id).maybeSingle();
+      if (p) {
+        setProfileId(p.id);
+        setFullName(p.full_name || "");
+        setEmail(p.email || "");
+        setJobTitle(p.job_title || "");
+        setBusinessUnit(p.business_unit || "");
+        setCity(p.city || "");
+        setCountry(p.country || "");
+        setLanguages((p.languages || []).join(", "));
+        setAvailability(p.availability_pct ?? 50);
+        setEarliestStart(p.earliest_start || "");
+        setOpenToMission(!!p.open_to_mission);
+        setNotes(p.notes || "");
+        const { data: ps } = await supabase.from("profile_skills").select("skill_id,proficiency,years_of_experience").eq("profile_id", p.id);
+        setSelectedSkills((ps || []).map((x: any) => ({ skill_id: x.skill_id, proficiency_level: x.proficiency, years_experience: x.years_of_experience })));
+      }
+    };
+    load();
+  }, [user?.id]);
+
   const filteredSkills = useMemo(
     () => skills.filter((s) => s.name.toLowerCase().includes((skillQuery||"").toLowerCase())),
     [skills, skillQuery]
@@ -37,9 +71,46 @@ const Profile = () => {
   const removeSkill = (skill_id: string) => {
     setSelectedSkills((prev) => prev.filter((ps) => ps.skill_id !== skill_id));
   };
-  const onSave = (e: React.FormEvent) => {
+  const onSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: "Saved (demo)", description: `Profile saved with ${selectedSkills.length} skills. Connect Supabase to persist your profile.` });
+    if (!user) return;
+    const payload: any = {
+      user_id: user.id,
+      full_name: fullName,
+      email: email || user.email,
+      job_title: jobTitle,
+      business_unit: businessUnit,
+      city,
+      country,
+      languages: languages.split(",").map((s) => s.trim()).filter(Boolean),
+      availability_pct: availability,
+      earliest_start: earliestStart || null,
+      open_to_mission: openToMission,
+      notes,
+    };
+    const { data: up, error } = await supabase
+      .from("profiles")
+      .upsert({ id: profileId || undefined, ...payload })
+      .select("id")
+      .maybeSingle();
+    if (error) return toast({ title: "Error", description: error.message });
+    const pid = up?.id || profileId;
+    if (!pid) return toast({ title: "Error", description: "Could not save profile id" });
+
+    // Replace skills for simplicity
+    await supabase.from("profile_skills").delete().eq("profile_id", pid);
+    if (selectedSkills.length > 0) {
+      const insertRows = selectedSkills.map((s) => ({
+        profile_id: pid,
+        skill_id: s.skill_id,
+        proficiency: s.proficiency_level,
+        years_of_experience: s.years_experience ?? 0,
+      }));
+      const { error: err2 } = await supabase.from("profile_skills").insert(insertRows);
+      if (err2) return toast({ title: "Error", description: err2.message });
+    }
+    setProfileId(pid);
+    toast({ title: "Profile saved", description: `Saved ${selectedSkills.length} skills.` });
   };
   return (
     <main className="min-h-screen bg-background">
@@ -51,33 +122,33 @@ const Profile = () => {
             <CardContent className="space-y-3">
               <div>
                 <Label>Name</Label>
-                <Input placeholder="Full name" required />
+                <Input placeholder="Full name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
               </div>
               <div>
                 <Label>Email</Label>
-                <Input type="email" placeholder="name@company.com" required readOnly />
+                <Input type="email" placeholder="name@company.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
               <div>
                 <Label>Job Title</Label>
-                <Input placeholder="e.g., Senior Engineer" />
+                <Input placeholder="e.g., Senior Engineer" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
               </div>
               <div>
                 <Label>Business Unit</Label>
-                <Input placeholder="e.g., Platform" />
+                <Input placeholder="e.g., Platform" value={businessUnit} onChange={(e) => setBusinessUnit(e.target.value)} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>City</Label>
-                  <Input placeholder="City" />
+                  <Input placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} />
                 </div>
                 <div>
                   <Label>Country</Label>
-                  <Input placeholder="Country" />
+                  <Input placeholder="Country" value={country} onChange={(e) => setCountry(e.target.value)} />
                 </div>
               </div>
               <div>
                 <Label>Languages</Label>
-                <Input placeholder="Comma separated, e.g., EN, FR" />
+                <Input placeholder="Comma separated, e.g., EN, FR" value={languages} onChange={(e) => setLanguages(e.target.value)} />
               </div>
             </CardContent>
           </Card>
@@ -87,19 +158,19 @@ const Profile = () => {
             <CardContent className="space-y-3">
               <div>
                 <Label>Availability %</Label>
-                <Slider min={0} max={100} step={10} defaultValue={[50]} />
+                <Slider min={0} max={100} step={10} value={[availability]} onValueChange={(v) => setAvailability(v[0])} />
               </div>
               <div>
                 <Label>Earliest Start</Label>
-                <Input type="date" />
+                <Input type="date" value={earliestStart || ""} onChange={(e) => setEarliestStart(e.target.value)} />
               </div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="otm">Open to mission</Label>
-                <Switch id="otm" />
+                <Switch id="otm" checked={openToMission} onCheckedChange={setOpenToMission} />
               </div>
               <div>
                 <Label>Notes</Label>
-                <Textarea placeholder="Short context…" />
+                <Textarea placeholder="Short context…" value={notes} onChange={(e) => setNotes(e.target.value)} />
               </div>
             </CardContent>
           </Card>
