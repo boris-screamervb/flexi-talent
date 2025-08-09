@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const Auth = () => {
-  const { session, loading, signInWithPassword, signUpWithPassword, sendMagicLink } = useAuth();
+  const { session, loading, signInWithPassword, signUpWithPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -33,7 +33,8 @@ const Auth = () => {
     const { error } = await signInWithPassword(email, password);
     setSubmitting(false);
     if (error) return toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
-    toast({ title: "Signed in", description: "Welcome back!" });
+    // Force a full reload to prevent auth limbo states
+    window.location.href = from;
   };
 
   const onSignUp = async (e: React.FormEvent) => {
@@ -48,20 +49,12 @@ const Auth = () => {
     toast({ title: "Check your email", description: "Confirm your email to complete sign up." });
   };
 
-  const onMagic = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    const { error } = await sendMagicLink(email);
-    setSubmitting(false);
-    if (error) return toast({ title: "Magic link failed", description: error.message, variant: "destructive" });
-    toast({ title: "Magic link sent", description: "Check your inbox to sign in." });
-  };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background">
       <article className="w-full max-w-md rounded-xl border bg-card p-6 shadow-sm">
         <h1 className="text-2xl font-semibold mb-2">Sign in to Skills Directory</h1>
-        <p className="text-sm text-muted-foreground mb-6">Use your email and password, or request a magic link.</p>
+        <p className="text-sm text-muted-foreground mb-6">Use your email and password to sign in.</p>
 
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid grid-cols-2 w-full">
@@ -80,9 +73,6 @@ const Auth = () => {
                 <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
               </div>
               <Button type="submit" className="w-full" disabled={submitting}>Sign In</Button>
-              <Button type="button" variant="outline" className="w-full" onClick={onMagic} disabled={submitting || !email}>
-                Send Magic Link
-              </Button>
             </form>
           </TabsContent>
 
