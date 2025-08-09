@@ -14,13 +14,187 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_log: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          payload: Json | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          payload?: Json | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          payload?: Json | null
+        }
+        Relationships: []
+      }
+      hr_emails: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          email: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          email: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
+      profile_skills: {
+        Row: {
+          certified: boolean
+          created_at: string
+          last_used_year: number | null
+          proficiency: number
+          profile_id: string
+          skill_id: string
+          updated_at: string
+          years_of_experience: number
+        }
+        Insert: {
+          certified?: boolean
+          created_at?: string
+          last_used_year?: number | null
+          proficiency?: number
+          profile_id: string
+          skill_id: string
+          updated_at?: string
+          years_of_experience?: number
+        }
+        Update: {
+          certified?: boolean
+          created_at?: string
+          last_used_year?: number | null
+          proficiency?: number
+          profile_id?: string
+          skill_id?: string
+          updated_at?: string
+          years_of_experience?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_skills_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          availability_pct: number
+          business_unit: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          earliest_start: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          job_title: string | null
+          languages: string[] | null
+          notes: string | null
+          open_to_mission: boolean
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          availability_pct?: number
+          business_unit?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          earliest_start?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          job_title?: string | null
+          languages?: string[] | null
+          notes?: string | null
+          open_to_mission?: boolean
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          availability_pct?: number
+          business_unit?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          earliest_start?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          job_title?: string | null
+          languages?: string[] | null
+          notes?: string | null
+          open_to_mission?: boolean
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      skills: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_hr: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      requesting_email: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
