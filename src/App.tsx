@@ -27,8 +27,8 @@ const App = () => (
           <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
           <Route path="/login" element={<PublicRoute><Auth /></PublicRoute>} />
 
-          {/* Protected layout */}
-          <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
+          {/* Public layout */}
+          <Route element={<ProtectedLayout />}>
             <Route index element={<Search />} />
             <Route path="/search" element={<Search />} />
             <Route path="/profile" element={<Profile />} />
