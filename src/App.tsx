@@ -23,12 +23,12 @@ const App = () => (
       <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Auth */}
-          <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-          <Route path="/login" element={<PublicRoute><Auth /></PublicRoute>} />
+          {/* Public routes - no auth required */}
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/login" element={<Auth />} />
 
-          {/* Protected layout */}
-          <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
+          {/* Main app routes */}
+          <Route element={<ProtectedLayout />}>
             <Route index element={<Search />} />
             <Route path="/search" element={<Search />} />
             <Route path="/profile" element={<Profile />} />
