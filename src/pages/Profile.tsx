@@ -10,10 +10,10 @@ import { useEffect, useMemo, useState } from "react";
 import { ProfileSkill } from "@/components/skills/sample-data";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/auth/AuthProvider";
+// Removed auth import since auth is disabled
 
 const Profile = () => {
-  const { user } = useAuth();
+  // Demo mode - use first profile or create new one
   const [skillQuery, setSkillQuery] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<ProfileSkill[]>([]);
   const [skills, setSkills] = useState<{ id: string; name: string }[]>([]);
@@ -34,8 +34,11 @@ const Profile = () => {
     const load = async () => {
       const { data: skillsData } = await supabase.from("skills").select("id,name").eq("is_active", true).order("name");
       setSkills(skillsData || []);
-      if (!user) return;
-      const { data: p } = await supabase.from("profiles").select("id,full_name,email,job_title,business_unit,location_city,location_country,languages,availability_percent,availability_earliest_start,open_to_mission,notes").eq("user_id", user.id).maybeSingle();
+      
+      // Demo mode: load first available profile or create template
+      const { data: profiles } = await supabase.from("profiles").select("id,full_name,email,job_title,business_unit,location_city,location_country,languages,availability_percent,availability_earliest_start,open_to_mission,notes").limit(1);
+      const p = profiles?.[0];
+      
       if (p) {
         setProfileId(p.id);
         setFullName(p.full_name || "");
@@ -54,7 +57,7 @@ const Profile = () => {
       }
     };
     load();
-  }, [user?.id]);
+  }, []);
 
   const filteredSkills = useMemo(
     () => skills.filter((s) => s.name.toLowerCase().includes((skillQuery||"").toLowerCase())),
@@ -73,11 +76,11 @@ const Profile = () => {
   };
   const onSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    
     const payload: any = {
-      user_id: user.id,
+      user_id: null, // Demo mode - no user association
       full_name: fullName,
-      email: email || user.email,
+      email: email,
       job_title: jobTitle,
       business_unit: businessUnit,
       location_city: city,

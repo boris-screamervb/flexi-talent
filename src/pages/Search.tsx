@@ -49,7 +49,7 @@ const Search = () => {
     const load = async () => {
       const { data: skillsData } = await supabase.from("skills").select("id,name").eq("is_active", true).order("name");
       setSkills(skillsData || []);
-      const { data: profs } = await supabase.from("profiles").select("id,full_name,job_title,business_unit,location_city,location_country,availability_percent,availability_earliest_start,open_to_mission,last_updated,profile_skills(skill_id,proficiency_level)");
+      const { data: profs } = await supabase.from("profiles").select("id,full_name,job_title,business_unit,location_city,location_country,availability_percent,availability_earliest_start,open_to_mission,last_updated,profile_skills(skill_id,proficiency_level,years_experience)");
       const mapped = (profs || []).map((p: any) => ({
         id: p.id,
         full_name: p.full_name,
