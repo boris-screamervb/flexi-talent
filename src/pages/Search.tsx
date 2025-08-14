@@ -49,19 +49,19 @@ const Search = () => {
     const load = async () => {
       const { data: skillsData } = await supabase.from("skills").select("id,name").eq("is_active", true).order("name");
       setSkills(skillsData || []);
-      const { data: profs } = await supabase.from("profiles").select("id,full_name,job_title,business_unit,city,country,availability_pct,earliest_start,open_to_mission,updated_at,profile_skills(skill_id,proficiency)");
+      const { data: profs } = await supabase.from("profiles").select("id,full_name,job_title,business_unit,location_city,location_country,availability_percent,availability_earliest_start,open_to_mission,last_updated,profile_skills(skill_id,proficiency_level)");
       const mapped = (profs || []).map((p: any) => ({
         id: p.id,
         full_name: p.full_name,
         job_title: p.job_title,
         business_unit: p.business_unit,
-        location_city: p.city,
-        location_country: p.country,
-        availability_percent: p.availability_pct,
-        availability_earliest_start: p.earliest_start,
+        location_city: p.location_city,
+        location_country: p.location_country,
+        availability_percent: p.availability_percent,
+        availability_earliest_start: p.availability_earliest_start,
         open_to_mission: p.open_to_mission,
-        last_updated: p.updated_at,
-        skills: (p.profile_skills || []).map((s: any) => ({ skill_id: s.skill_id, proficiency_level: s.proficiency, years_experience: 0 })),
+        last_updated: p.last_updated,
+        skills: (p.profile_skills || []).map((s: any) => ({ skill_id: s.skill_id, proficiency_level: s.proficiency_level, years_experience: 0 })),
       }));
       setProfiles(mapped);
     };

@@ -35,22 +35,22 @@ const Profile = () => {
       const { data: skillsData } = await supabase.from("skills").select("id,name").eq("is_active", true).order("name");
       setSkills(skillsData || []);
       if (!user) return;
-      const { data: p } = await supabase.from("profiles").select("id,full_name,email,job_title,business_unit,city,country,languages,availability_pct,earliest_start,open_to_mission,notes").eq("user_id", user.id).maybeSingle();
+      const { data: p } = await supabase.from("profiles").select("id,full_name,email,job_title,business_unit,location_city,location_country,languages,availability_percent,availability_earliest_start,open_to_mission,notes").eq("user_id", user.id).maybeSingle();
       if (p) {
         setProfileId(p.id);
         setFullName(p.full_name || "");
         setEmail(p.email || "");
         setJobTitle(p.job_title || "");
         setBusinessUnit(p.business_unit || "");
-        setCity(p.city || "");
-        setCountry(p.country || "");
+        setCity(p.location_city || "");
+        setCountry(p.location_country || "");
         setLanguages((p.languages || []).join(", "));
-        setAvailability(p.availability_pct ?? 50);
-        setEarliestStart(p.earliest_start || "");
+        setAvailability(p.availability_percent ?? 50);
+        setEarliestStart(p.availability_earliest_start || "");
         setOpenToMission(!!p.open_to_mission);
         setNotes(p.notes || "");
-        const { data: ps } = await supabase.from("profile_skills").select("skill_id,proficiency,years_of_experience").eq("profile_id", p.id);
-        setSelectedSkills((ps || []).map((x: any) => ({ skill_id: x.skill_id, proficiency_level: x.proficiency, years_experience: x.years_of_experience })));
+        const { data: ps } = await supabase.from("profile_skills").select("skill_id,proficiency_level,years_experience").eq("profile_id", p.id);
+        setSelectedSkills((ps || []).map((x: any) => ({ skill_id: x.skill_id, proficiency_level: x.proficiency_level, years_experience: x.years_experience })));
       }
     };
     load();
@@ -80,11 +80,11 @@ const Profile = () => {
       email: email || user.email,
       job_title: jobTitle,
       business_unit: businessUnit,
-      city,
-      country,
+      location_city: city,
+      location_country: country,
       languages: languages.split(",").map((s) => s.trim()).filter(Boolean),
-      availability_pct: availability,
-      earliest_start: earliestStart || null,
+      availability_percent: availability,
+      availability_earliest_start: earliestStart || null,
       open_to_mission: openToMission,
       notes,
     };
@@ -103,8 +103,8 @@ const Profile = () => {
       const insertRows = selectedSkills.map((s) => ({
         profile_id: pid,
         skill_id: s.skill_id,
-        proficiency: s.proficiency_level,
-        years_of_experience: s.years_experience ?? 0,
+        proficiency_level: s.proficiency_level,
+        years_experience: s.years_experience ?? 0,
       }));
       const { error: err2 } = await supabase.from("profile_skills").insert(insertRows);
       if (err2) return toast({ title: "Error", description: err2.message });

@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -57,32 +57,35 @@ export type Database = {
         Row: {
           certified: boolean
           created_at: string
-          last_used_year: number | null
-          proficiency: number
+          evidence_note: string | null
+          last_used: string | null
+          proficiency_level: number
           profile_id: string
           skill_id: string
           updated_at: string
-          years_of_experience: number
+          years_experience: number
         }
         Insert: {
           certified?: boolean
           created_at?: string
-          last_used_year?: number | null
-          proficiency?: number
+          evidence_note?: string | null
+          last_used?: string | null
+          proficiency_level?: number
           profile_id: string
           skill_id: string
           updated_at?: string
-          years_of_experience?: number
+          years_experience?: number
         }
         Update: {
           certified?: boolean
           created_at?: string
-          last_used_year?: number | null
-          proficiency?: number
+          evidence_note?: string | null
+          last_used?: string | null
+          proficiency_level?: number
           profile_id?: string
           skill_id?: string
           updated_at?: string
-          years_of_experience?: number
+          years_experience?: number
         }
         Relationships: [
           {
@@ -103,54 +106,54 @@ export type Database = {
       }
       profiles: {
         Row: {
-          availability_pct: number
+          availability_earliest_start: string | null
+          availability_percent: number
           business_unit: string | null
-          city: string | null
-          country: string | null
           created_at: string
-          earliest_start: string | null
           email: string | null
           full_name: string | null
           id: string
           job_title: string | null
           languages: string[] | null
+          last_updated: string
+          location_city: string | null
+          location_country: string | null
           notes: string | null
           open_to_mission: boolean
-          updated_at: string
           user_id: string | null
         }
         Insert: {
-          availability_pct?: number
+          availability_earliest_start?: string | null
+          availability_percent?: number
           business_unit?: string | null
-          city?: string | null
-          country?: string | null
           created_at?: string
-          earliest_start?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
           job_title?: string | null
           languages?: string[] | null
+          last_updated?: string
+          location_city?: string | null
+          location_country?: string | null
           notes?: string | null
           open_to_mission?: boolean
-          updated_at?: string
           user_id?: string | null
         }
         Update: {
-          availability_pct?: number
+          availability_earliest_start?: string | null
+          availability_percent?: number
           business_unit?: string | null
-          city?: string | null
-          country?: string | null
           created_at?: string
-          earliest_start?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
           job_title?: string | null
           languages?: string[] | null
+          last_updated?: string
+          location_city?: string | null
+          location_country?: string | null
           notes?: string | null
           open_to_mission?: boolean
-          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
